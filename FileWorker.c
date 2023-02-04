@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <windows.h>
 
 void invalid()
 {
@@ -14,6 +15,35 @@ void help()
     printf("\n");
 }
 
+char* skip_string(char* line, int length, int skip)
+{
+    int i = 0;
+    char* result = malloc(sizeof(char) * (length - skip));
+
+    for (int j = skip + 1; j < length; j++) result[i++] = line[j];
+
+    result[i] = '\0';
+    return result;
+}
+
+char **split_string(char *input, char sep, int *count)
+{
+    int len = strlen(input);
+
+    char **result = malloc(sizeof(char*) * len);
+    char *token = strtok(input, &sep);
+
+    int i = 0;
+    while (token != NULL) {
+        result[i++] = token;
+        token = strtok(NULL, &sep);
+    }
+
+    result[i] = NULL;
+    *count = i;
+    return result;
+}
+
 int file_exists(char* filename)
 {
     FILE* file = fopen(filename, "r");
@@ -24,8 +54,52 @@ int file_exists(char* filename)
     return 0;
 }
 
+int dir_exists(char* dirname)
+{
+    DWORD ftyp = GetFileAttributesA(dirname);
+    if (ftyp == INVALID_FILE_ATTRIBUTES) {
+        return 0;
+    }
+    if (ftyp & FILE_ATTRIBUTE_DIRECTORY) {
+        return 1;
+    }
+    return 0;
+}
+
+void mkdir(char* path)
+{
+    if (!dir_exists(path)) {
+        CreateDirectory(path, NULL);
+    }
+}
+
 void createfile(char* filename)
 {
+    int count;
+    char** steps = split_string(filename, '/', &count);
+    printf("==> Total: %d\n", count);
+    for (int i = 0; i < count; i++) {
+        printf(" - %s\n", steps[i]);
+    }
+
+    // e.g: a/b/c/d.txt
+    // checking dirs ['a/', 'a/b/', 'a/b/c/']
+    // checking file 'a/b/c/d.txt'
+
+    char* path = malloc(sizeof(char) * 512);
+    strcpy(path, "");
+    for (int i = 0; i < count - 1; i++) {
+        strcat(path, steps[i]);
+
+        if (path[strlen(path) - 1] != '/') strcat(path, "/");
+
+        printf("checking dir `%s`\n", path);
+        if (!dir_exists(path)) mkdir(path);
+    }
+
+
+    printf("checking file `%s`\n", filename);
+
     FILE* file = fopen(filename, "w");
     fclose(file);
 }
@@ -82,33 +156,6 @@ void parse(int argc, char** argv)
     }
 }
 
-char* skip_string(char* line, int length, int skip)
-{
-    int i = 0;
-    char* result = malloc(sizeof(char) * (length - skip));
-
-    for (int j = skip + 1; j < length; j++) result[i++] = line[j];
-
-    result[i] = '\0';
-    return result;
-}
-
-char **split_string(char *input, char sep, int *count)
-{
-    int i = 0;
-    char **result = malloc(sizeof(char*) * 512);
-    char *token = strtok(input, &sep);
-
-    while (token != NULL) {
-        result[i++] = token;
-        token = strtok(NULL, &sep);
-    }
-
-    result[i] = NULL;
-    *count = i;
-    return result;
-}
-
 int main(int argc, char** argv)
 {
     int flag = 1;
@@ -137,6 +184,10 @@ int main(int argc, char** argv)
             } else if (strcmp(command, "help") == 0 || strcmp(command, "h") == 0) {
                 help();
             } else {
+                for (int i = 0; i < args_count; i++) {
+                    printf(" - %s\n", arguments[i]);
+                }
+
                 // Parsing commands
                 if (strcmp(command, "createfile") == 0) {
                     // support --file <value>
