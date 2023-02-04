@@ -146,6 +146,7 @@ int main(int argc, char** argv)
                         char* name = NULL;
                         for (int i = 0; i < args_count; i++) {
                             if (strcmp(arguments[i], "--file") == 0) {
+                                // printf("createfile: %s\n", arguments[i + 1]);
                                 if (i + 1 >= args_count) {
                                     break;
                                 }
@@ -153,7 +154,6 @@ int main(int argc, char** argv)
                                 break;
                             }
                         }
-
                         if (name == NULL) {
                             printf("createfile: invalid arguments try `--file <name>`\n");
                         } else createfile(name);
