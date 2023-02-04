@@ -26,6 +26,14 @@ char* skip_string(char* line, int length, int skip)
     return result;
 }
 
+char* copystr(char* line, int length)
+{
+    char* result = malloc(sizeof(char) * length);
+    for (int i = 0; i < length; i++) result[i] = line[i];
+    result[length] = '\0';
+    return result;
+}
+
 char **split_string(char *input, char sep, int *count)
 {
     int len = strlen(input);
@@ -76,16 +84,12 @@ void mkdir(char* path)
 void createfile(char* filename)
 {
     int count;
-    char** steps = split_string(filename, '/', &count);
-    printf("==> Total: %d\n", count);
-    for (int i = 0; i < count; i++) {
-        printf(" - %s\n", steps[i]);
-    }
+    char *temp = copystr(filename, strlen(filename));
+    char **steps = split_string(filename, '/', &count);
 
     // e.g: a/b/c/d.txt
     // checking dirs ['a/', 'a/b/', 'a/b/c/']
     // checking file 'a/b/c/d.txt'
-
     char* path = malloc(sizeof(char) * 512);
     strcpy(path, "");
     for (int i = 0; i < count - 1; i++) {
@@ -97,10 +101,9 @@ void createfile(char* filename)
         if (!dir_exists(path)) mkdir(path);
     }
 
+    printf("checking file `%s`\n", temp);
 
-    printf("checking file `%s`\n", filename);
-
-    FILE* file = fopen(filename, "w");
+    FILE* file = fopen(temp, "w");
     fclose(file);
 }
 
