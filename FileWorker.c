@@ -3,6 +3,9 @@
 #include <string.h>
 #include <windows.h>
 
+// Global variables
+int created_updated_file = 0;
+
 void invalid()
 {
     printf("invalid command\n");
@@ -105,6 +108,7 @@ void createfile(char* filename)
 
     FILE* file = fopen(temp, "w");
     fclose(file);
+    created_updated_file = 1;
 }
 
 // remove \r
@@ -225,6 +229,7 @@ void insertstr(char* filename, char* str, int line, int index)
         FILE* file = fopen(filename, "w");
         fprintf(file, "%s", contents);
         fclose(file);
+        created_updated_file = 1;
     } else {
         printf("insertstr: file `%s` does not exist\n", filename);
     }
@@ -341,6 +346,7 @@ void removestr(char *name, int line, int index, int size, int mode)
         FILE* file = fopen(name, "w");
         fprintf(file, "%s", contents);
         fclose(file);
+        created_updated_file = 1;
     } else {
         printf("removestr: file `%s` does not exist\n", name);
     }
@@ -419,7 +425,13 @@ int main(int argc, char** argv)
 {
     int flag = 1;
     while (flag == 1) {
+        // Reset global variables
+        created_updated_file = 0;
+
+        // Print prompt
         printf("FileWorker> ");
+
+        // Read input
         char* input = malloc(512);
         fgets(input, 512, stdin);
         int len = strlen(input);
@@ -448,7 +460,14 @@ int main(int argc, char** argv)
                 }
 
                 // Parsing commands
-                if (strcmp(command, "createfile") == 0) {
+                if (strcmp(command, "undo") == 0) {
+                    if (created_updated_file) {
+                        // TODO: bezooodi
+                    } else {
+                        printf("undo: no file created or updated in the previous command\n");
+                    }
+                }
+                else if (strcmp(command, "createfile") == 0) {
                     // support --file <value>
                     if (args_count == 0) {
                         printf("createfile: invalid arguments try `--file <name>`\n");
