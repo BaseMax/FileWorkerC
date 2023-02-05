@@ -305,6 +305,53 @@ int search_string(char *contents, char *looking_for)
     return -1;
 }
 
+int *search_string_all(char *contents, char *value)
+{
+    int len = strlen(contents);
+    int value_len = strlen(value);
+    int i = 0;
+    int j = 0;
+    int count = 0;
+    int *result = (int*)malloc(sizeof(int) * 100);
+    while (i < len) {
+        if (contents[i] == value[j]) {
+            j++;
+            if (j == value_len) {
+                result[count] = i - j + 1;
+                count++;
+                j = 0;
+            }
+        } else {
+            j = 0;
+        }
+        i++;
+    }
+    result[count] = -1;
+    return result;
+}
+
+int search_string_count(char *contents, char *value)
+{
+    int len = strlen(contents);
+    int value_len = strlen(value);
+    int i = 0;
+    int j = 0;
+    int count = 0;
+    while (i < len) {
+        if (contents[i] == value[j]) {
+            j++;
+            if (j == value_len) {
+                count++;
+                j = 0;
+            }
+        } else {
+            j = 0;
+        }
+        i++;
+    }
+    return count;
+}
+
 int main(int argc, char** argv)
 {
     int flag = 1;
@@ -430,11 +477,16 @@ int main(int argc, char** argv)
                     }
                 } else if (strcmp(command, "find") == 0) {
                     // handling -–str <str> -–file <file name>
+                    // -count is a optional argument
+                    // -at is a optional argument
+                    int mode = 0;
+                    int at = -1;
                     if (args_count == 0) {
                         printf("find: invalid arguments try `--str <value> --file <name>`\n");
                     } else {
                         char* name = NULL;
                         char* value = NULL;
+                        int error = 0;
                         for (int i = 0; i < args_count; i++) {
                             if (strcmp(arguments[i], "--file") == 0) {
                                 // printf("createfile: %s\n", arguments[i + 1]);
@@ -450,18 +502,52 @@ int main(int argc, char** argv)
                                 }
                                 value = arguments[i + 1];
                                 i++;
+                            } else if (strcmp(arguments[i], "-count") == 0) {
+                                mode = 1;
+                            } else if (strcmp(arguments[i], "-at") == 0) {
+                                if (i + 1 >= args_count) {
+                                    error = 1;
+                                    break;
+                                }
+                                mode = 2;
+                                at = atoi(arguments[i + 1]);
+                                i++;
                             }
                         }
-                        if (name == NULL || value == NULL) {
-                            printf("find: invalid arguments try `--str <value> --file <name>`\n");
+                        if (error == 1 || name == NULL || value == NULL) {
+                            printf("find: invalid arguments try `--str <value> --file <name>` with `-count` or `-at n`\n");
                         } else {
                             if (file_exists(name)) {
                                 char* contents = file_read(name);
-                                int offset = search_string(contents, value);
-                                if (offset == -1) {
-                                    printf("find: string `%s` not found in file `%s`\n", value, name);
-                                } else {
-                                    printf("find: string `%s` found in file `%s` at offset %d\n", value, name, offset);
+
+                                if (mode == 0) {
+                                    int offset = search_string(contents, value);
+                                    if (offset == -1) {
+                                        printf("find: string `%s` not found in file `%s`\n", value, name);
+                                    } else {
+                                        printf("find: string `%s` found in file `%s` at offset %d\n", value, name, offset);
+                                    }
+                                } else if (mode == 1) {
+                                    printf("mode is 1\n");
+                                    int count = search_string_count(contents, value);
+                                    printf("c is %d\n", count);
+                                    printf("find: string `%s` found in file `%s` %d times\n", value, name, count);
+                                } else if (mode == 2) {
+                                    int* offsets = search_string_all(contents, value);
+                                    int count = search_string_count(contents, value);
+                                    if (count == 0 || offsets == NULL || offsets[0] == -1) {
+                                        printf("find: string `%s` not found in file `%s`\n", value, name);
+                                        continue;
+                                    } else if (at >= count) {
+                                        printf("find: string `%s` found in file `%s` but there is no %dth occurence\n", value, name, at);
+                                        continue;
+                                    } else {
+                                        printf("find: string `%s` found in file `%s` at offsets: ", value, name);
+                                        for (int i = 0; i < count; i++) {
+                                            printf("%d ", offsets[i]);
+                                        }
+                                        printf("\n");
+                                    }
                                 }
                             }
                         }
