@@ -352,27 +352,31 @@ int main(int argc, char** argv)
                                     break;
                                 }
                                 name = arguments[i + 1];
+                                i++;
                             } else if (strcmp(arguments[i], "--str") == 0) {
                                 // printf("createfile: %s\n", arguments[i + 1]);
                                 if (i + 1 >= args_count) {
                                     break;
                                 }
                                 value = arguments[i + 1];
-                            } else if (strcmp(arguments[i], "--pos") == 0) {
+                                i++;
+                            } else if (strcmp(arguments[i], "-pos") == 0) {
                                 // printf("createfile: %s\n", arguments[i + 1]);
                                 if (i + 1 >= args_count) {
                                     break;
                                 }
                                 char* pos = arguments[i + 1];
-                                char** pos_args = split_string(pos, ':', &args_count);
+                                int pos_args_count;
+                                char** pos_args = split_string(pos, ':', &pos_args_count);
                                 if (args_count == 2) {
                                     line = atoi(pos_args[0]);
                                     index = atoi(pos_args[1]);
                                 }
+                                i++;
                             }
                         }
                         if (name == NULL || value == NULL || line == -1 || index == -1) {
-                            printf("insertstr: invalid arguments try `--file <name> --str <value> --pos <line>:<index>`\n");
+                            printf("insertstr: invalid arguments try `--file <name> --str <value> -pos <line>:<index>`\n");
                         } else insertstr(name, value, line, index);
                     }
                 } else if (strcmp(command, "cat") == 0) {
@@ -403,10 +407,9 @@ int main(int argc, char** argv)
                         }
                     }
                 } else if (strcmp(command, "removestr") == 0) {
-                    // handling --file val --pos line:pos --size n -f
-                    // handling --file val --pos line:pos --size n -b
+                    // handling --file val -pos line:pos -size n -f
+                    // handling --file val -pos line:pos -size n -b
                     // so -f and -b are optional but it's needed to specify one of them
-
                     if (args_count == 0) {
                         printf("removestr: invalid arguments try `--file <name> -pos <line>:<index> -size <n> -f/-b`\n");
                     } else {
@@ -455,7 +458,7 @@ int main(int argc, char** argv)
                         }
 
                         if (name == NULL || line == -1 || index == -1 || size == -1 || mode == -1) {
-                            printf("removestr: invalid arguments try `--file <name> --pos <line>:<index> --size <n> -f/-b`\n");
+                            printf("removestr: invalid arguments try `--file <name> -pos <line>:<index> -size <n> -f/-b`\n");
                         } else {
                             if (file_exists(name)) {
                                 removestr(name, line, index, size, mode);
@@ -466,7 +469,6 @@ int main(int argc, char** argv)
                     }
                 }
                 printf("Checking %s.%s\n", command, args);
-                // parse(2, (char*[]){command, args});
             }
         }
     }
