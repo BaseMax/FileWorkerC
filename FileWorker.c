@@ -283,6 +283,28 @@ void removestr(char *name, int line, int index, int size, int mode)
     }
 }
 
+// return index of the first char of the string
+// otherwise return -1
+int search_string(char *contents, char *looking_for)
+{
+    int len = strlen(contents);
+    int looking_for_len = strlen(looking_for);
+    int i = 0;
+    int j = 0;
+    while (i < len) {
+        if (contents[i] == looking_for[j]) {
+            j++;
+            if (j == looking_for_len) {
+                return i - j + 1;
+            }
+        } else {
+            j = 0;
+        }
+        i++;
+    }
+    return -1;
+}
+
 int main(int argc, char** argv)
 {
     int flag = 1;
@@ -403,6 +425,44 @@ int main(int argc, char** argv)
                                 printf("%s", contents);
                             } else {
                                 printf("cat: file `%s` does not exist\n", name);
+                            }
+                        }
+                    }
+                } else if (strcmp(command, "find") == 0) {
+                    // handling -–str <str> -–file <file name>
+                    if (args_count == 0) {
+                        printf("find: invalid arguments try `--str <value> --file <name>`\n");
+                    } else {
+                        char* name = NULL;
+                        char* value = NULL;
+                        for (int i = 0; i < args_count; i++) {
+                            if (strcmp(arguments[i], "--file") == 0) {
+                                // printf("createfile: %s\n", arguments[i + 1]);
+                                if (i + 1 >= args_count) {
+                                    break;
+                                }
+                                name = arguments[i + 1];
+                                i++;
+                            } else if (strcmp(arguments[i], "--str") == 0) {
+                                // printf("createfile: %s\n", arguments[i + 1]);
+                                if (i + 1 >= args_count) {
+                                    break;
+                                }
+                                value = arguments[i + 1];
+                                i++;
+                            }
+                        }
+                        if (name == NULL || value == NULL) {
+                            printf("find: invalid arguments try `--str <value> --file <name>`\n");
+                        } else {
+                            if (file_exists(name)) {
+                                char* contents = file_read(name);
+                                int offset = search_string(contents, value);
+                                if (offset == -1) {
+                                    printf("find: string `%s` not found in file `%s`\n", value, name);
+                                } else {
+                                    printf("find: string `%s` found in file `%s` at offset %d\n", value, name, offset);
+                                }
                             }
                         }
                     }
