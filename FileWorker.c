@@ -419,33 +419,33 @@ int main(int argc, char** argv)
                         printf("args count: %d\n", args_count);
                         printf("last arg is %s\n", arguments[args_count - 1]);
                         int i;
-                        for (i = 0; i <= args_count; i++) {
-                            printf("==> removestr: %s\n", arguments[i]);
+                        for (i = 0; i < args_count; i++) {
+                            // printf("==> removestr: %s\n", arguments[i]);
                             if (strcmp(arguments[i], "--file") == 0) {
-                                // printf("createfile: %s\n", arguments[i + 1]);
+                                // printf("file createfile: %s\n", arguments[i + 1]);
                                 if (i + 1 >= args_count) {
                                     break;
                                 }
                                 name = arguments[i + 1];
                                 i++;
                             } else if (strcmp(arguments[i], "-pos") == 0) {
-                                printf("pos createfile: %s\n", arguments[i + 1]);
+                                // printf("pos createfile: %s\n", arguments[i + 1]);
                                 if (i + 1 >= args_count) {
                                     break;
                                 }
                                 char* pos = arguments[i + 1];
-                                char** pos_args = split_string(pos, ':', &args_count);
-                                if (args_count == 2) {
+                                int pos_args_count;
+                                char** pos_args = split_string(pos, ':', &pos_args_count);
+                                if (pos_args_count == 2) {
                                     line = atoi(pos_args[0]);
                                     index = atoi(pos_args[1]);
                                 }
                                 i++;
                             } else if (strcmp(arguments[i], "-size") == 0) {
-                                printf("size createfile: %s\n", arguments[i + 1]);
+                                // printf("size createfile: %s\n", arguments[i + 1]);
                                 if (i + 1 >= args_count) {
                                     break;
                                 }
-                                printf("after size break");
                                 size = atoi(arguments[i + 1]);
                                 i++;
                             } else if (strcmp(arguments[i], "-f") == 0) {
