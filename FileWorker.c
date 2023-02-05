@@ -210,6 +210,43 @@ void insertstr(char* filename, char* str, int line, int index)
     }
 }
 
+// print list of dirs and files in a dir (recursive)
+void tree(char *path, int level)
+{
+    char *pattern = malloc(strlen(path) + 3);
+    strcpy(pattern, path);
+    strcat(pattern, "/*");
+
+    WIN32_FIND_DATA data;
+    HANDLE hFind = FindFirstFile(pattern, &data);
+    if (hFind != INVALID_HANDLE_VALUE) {
+        do {
+            for (int i = 0; i < level; i++) {
+                printf("    ");
+            }
+            printf("%s\n", data.cFileName);
+            if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+                if (strcmp(data.cFileName, ".") != 0 && strcmp(data.cFileName, "..") != 0) {
+                    char *new_path = malloc(strlen(path) + strlen(data.cFileName) + 2);
+                    strcpy(new_path, path);
+                    strcat(new_path, "/");
+                    strcat(new_path, data.cFileName);
+                    tree(new_path, level + 1);
+                }
+            }
+        } while (FindNextFile(hFind, &data));
+        FindClose(hFind);
+
+        free(pattern);
+
+        return;
+
+    } else {
+        printf("Error: Could not open directory \"%s\".", path);
+        exit(74);
+    }
+}
+
 // backward mean remove while go back
 // forward mean remove while go forward
 char *remove_at(char *contents, int line, int index, int size, int mode)
@@ -554,6 +591,21 @@ int main(int argc, char** argv)
                                     }
                                 }
                             }
+                        }
+                    }
+                } else if (strcmp(command, "tree") == 0) {
+                    // handling --dir <dir name>
+                    if (args_count == 0) {
+                        printf("tree: invalid arguments try `<name>`\n");
+                    } else if (args_count > 1) {
+                        printf("tree: invalid arguments try `<name>`\n");
+                    } else {
+                        char *name = arguments[0];
+                        if (dir_exists(name)) {
+                            printf("tree: directory `%s`:\n", name);
+                            tree(name, 0);
+                        } else {
+                            printf("tree: directory `%s` does not exist\n", name);
                         }
                     }
                 } else if (strcmp(command, "removestr") == 0) {
