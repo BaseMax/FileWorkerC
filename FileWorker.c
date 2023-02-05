@@ -18,6 +18,52 @@ void help()
     printf("\n");
 }
 
+// Replace all `value` to `value2` and make sure that `contents` has enough space by reallocating it
+char *replace_string(char *contents, char *value1, char *value2, int *cases)
+{
+    char *p, *q, *r, *s;
+    int new_len;
+    int value1_len = strlen(value1);
+    int value2_len = strlen(value2);
+    int count = 0;
+
+    // Count number of occurrences of value1 in contents
+    for (p = contents; (q = strstr(p, value1)) != NULL; p = q + value1_len)
+        count++;
+
+    // Allocate new memory for contents with enough space for value2
+    new_len = strlen(contents) + count * (value2_len - value1_len) + 1;
+    s = malloc(new_len);
+    if (s == NULL)
+        return NULL;
+
+    // Replace value1 with value2
+    for (p = contents, r = s; (q = strstr(p, value1)) != NULL; p = q + value1_len) {
+        strncpy(r, p, q - p);
+        r += q - p;
+        strcpy(r, value2);
+        r += value2_len;
+    }
+    strcpy(r, p);
+
+    // Update cases and return new contents
+    *cases = count;
+    free(contents);
+    return s;
+}
+
+void file_write(char *filepath, char *content)
+{
+    FILE* file = fopen(filepath, "w");
+    if (file == NULL) {
+        printf("Error: Could not open file \"%s\".", filepath);
+        exit(74);
+    }
+
+    fwrite(content, sizeof(char), strlen(content), file);
+    fclose(file);
+}
+
 char* skip_string(char* line, int length, int skip)
 {
     int i = 0;
@@ -637,6 +683,107 @@ int main(int argc, char** argv)
                                         }
                                         printf("\n");
                                     }
+                                }
+                            }
+                        }
+                    }
+                } else if (strcmp(command, "replace") == 0) {
+                    // handling --str1 from --str2 to --file a.txt
+
+                    if (args_count == 0) {
+                        printf("replace: invalid arguments try `--str1 <value> --str2 <value> --file <name>`\n");
+                    } else {
+                        char* name = NULL;
+                        char* value1 = NULL;
+                        char* value2 = NULL;
+
+                        for (int i = 0; i < args_count; i++) {
+                            if (strcmp(arguments[i], "--file") == 0) {
+                                // printf("createfile: %s\n", arguments[i + 1]);
+                                if (i + 1 >= args_count) {
+                                    break;
+                                }
+                                name = arguments[i + 1];
+                                i++;
+                            } else if (strcmp(arguments[i], "--str1") == 0) {
+                                // printf("createfile: %s\n", arguments[i + 1]);
+                                if (i + 1 >= args_count) {
+                                    break;
+                                }
+                                value1 = arguments[i + 1];
+                                i++;
+                            } else if (strcmp(arguments[i], "--str2") == 0) {
+                                // printf("createfile: %s\n", arguments[i + 1]);
+                                if (i + 1 >= args_count) {
+                                    break;
+                                }
+                                value2 = arguments[i + 1];
+                                i++;
+                            }
+                        }
+
+                        if (name == NULL || value1 == NULL || value2 == NULL) {
+                            printf("replace: invalid arguments try `--str1 <value> --str2 <value> --file <name>`\n");
+                        } else {
+                            if (file_exists(name)) {
+                                char* contents = file_read(name);
+                                contents = string_remover(contents, '\r');
+                                int cases = 0;
+                                char* new_contents = replace_string(contents, value1, value2, &cases);
+                                file_write(name, new_contents);
+                                printf("replace: string `%s` replaced with `%s` in file `%s` %d times\n", value1, value2, name, cases);
+                            } else {
+                                printf("replace: file `%s` does not exist\n", name);
+                            }
+                        }
+                    }
+                } else if (strcmp(command, "grep") == 0) {
+                    // handling --str val --files <file1> <file2> ...
+                    if (args_count == 0) {
+                        printf("grep: invalid arguments try `--str <value> --files <name1> <name2> ...`\n");
+                    } else {
+                        char* value = NULL;
+                        char** names = NULL;
+                        int names_count = 0;
+                        int error = 0;
+                        for (int i = 0; i < args_count; i++) {
+                            if (strcmp(arguments[i], "--files") == 0) {
+                                // printf("createfile: %s\n", arguments[i + 1]);
+                                if (i + 1 >= args_count) {
+                                    break;
+                                }
+                                names_count = args_count - i - 1;
+                                names = malloc(sizeof(char*) * names_count);
+                                for (int j = 0; j < names_count; j++) {
+                                    names[j] = arguments[i + j + 1];
+                                }
+                                i += names_count;
+                            } else if (strcmp(arguments[i], "--str") == 0) {
+                                // printf("createfile: %s\n", arguments[i + 1]);
+                                if (i + 1 >= args_count) {
+                                    break;
+                                }
+                                value = arguments[i + 1];
+                                i++;
+                            }
+                        }
+
+                        if (error == 1 || names_count == 0 || value == NULL) {
+                            printf("grep: invalid arguments try `--str <value> --files <name1> <name2> ...`\n");
+                        } else {
+                            for (int i = 0; i < names_count; i++) {
+                                char* name = names[i];
+                                if (file_exists(name)) {
+                                    char* contents = file_read(name);
+                                    contents = string_remover(contents, '\r');
+                                    int offset = search_string(contents, value);
+                                    if (offset == -1) {
+                                        printf("grep: string `%s` not found in file `%s`\n", value, name);
+                                    } else {
+                                        printf("grep: string `%s` found in file `%s` at offset %d\n", value, name, offset);
+                                    }
+                                } else {
+                                    printf("grep: file `%s` does not exist\n", name);
                                 }
                             }
                         }
