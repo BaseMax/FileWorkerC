@@ -210,6 +210,80 @@ void insertstr(char* filename, char* str, int line, int index)
     }
 }
 
+// backward mean remove while go back
+// forward mean remove while go forward
+char *remove_at(char *contents, int line, int index, int size, int mode)
+{
+    char *start = contents;
+    int curr_line = 1;
+    int curr_index = 0;
+    int len = strlen(contents);
+    char *new_contents = (char*)malloc(len + 1);
+    char *new_contents_ptr = new_contents;
+
+    char *prev_char = NULL;
+    char *curr_char = contents;
+    int prev_newline = 0;
+
+    while (*contents) {
+        if (curr_line == line && curr_index == index) {
+            if (mode == 0) {
+                contents += size;
+            } else if (mode == 1) {
+                contents += size;
+                curr_index += size;
+            } else if (mode == 2) {
+                contents += size;
+                curr_index += size;
+                curr_line += size;
+            }
+        } else {
+            *new_contents_ptr = *contents;
+            new_contents_ptr++;
+            prev_newline = (*contents == '\n');
+        }
+
+        if (*contents == '\n') {
+            curr_line++;
+            curr_index = 0;
+        } else {
+            curr_index++;
+        }
+        prev_char = contents;
+        curr_char = contents + 1;
+        contents++;
+    }
+
+    if (!prev_newline) {
+        *new_contents_ptr = '\0';
+    } else {
+        *new_contents_ptr = '\n';
+        new_contents_ptr++;
+        *new_contents_ptr = '\0';
+    }
+
+    free(start);
+    return new_contents;
+}
+
+void removestr(char *name, int line, int index, int size, int mode)
+{
+    if (file_exists(name)) {
+        printf("removestr: file `%s` exists\n", name);
+        char *contents = file_read(name);
+        printf("Content is '%s'\n", contents);
+        contents = remove_at(contents, line, index, size, mode);
+        printf("New Content is '%s'\n", contents);
+
+        FILE* file = fopen(name, "w");
+        fprintf(file, "%s", contents);
+        fclose(file);
+    } else {
+        printf("removestr: file `%s` does not exist\n", name);
+    }
+}
+
+
 int main(int argc, char** argv)
 {
     int flag = 1;
@@ -326,6 +400,74 @@ int main(int argc, char** argv)
                                 printf("%s", contents);
                             } else {
                                 printf("cat: file `%s` does not exist\n", name);
+                            }
+                        }
+                    }
+                } else if (strcmp(command, "removestr") == 0) {
+                    // handling --file val --pos line:pos --size n -f
+                    // handling --file val --pos line:pos --size n -b
+                    // so -f and -b are optional but it's needed to specify one of them
+
+                    if (args_count == 0) {
+                        printf("removestr: invalid arguments try `--file <name> -pos <line>:<index> -size <n> -f/-b`\n");
+                    } else {
+                        char* name = NULL;
+                        int line = -1;
+                        int index = -1;
+                        int size = -1;
+                        int mode = -1;
+                        printf("args count: %d\n", args_count);
+                        printf("last arg is %s\n", arguments[args_count - 1]);
+                        int i;
+                        for (i = 0; i <= args_count; i++) {
+                            printf("==> removestr: %s\n", arguments[i]);
+                            if (strcmp(arguments[i], "--file") == 0) {
+                                // printf("createfile: %s\n", arguments[i + 1]);
+                                if (i + 1 >= args_count) {
+                                    break;
+                                }
+                                name = arguments[i + 1];
+                                i++;
+                            } else if (strcmp(arguments[i], "-pos") == 0) {
+                                printf("pos createfile: %s\n", arguments[i + 1]);
+                                if (i + 1 >= args_count) {
+                                    break;
+                                }
+                                char* pos = arguments[i + 1];
+                                char** pos_args = split_string(pos, ':', &args_count);
+                                if (args_count == 2) {
+                                    line = atoi(pos_args[0]);
+                                    index = atoi(pos_args[1]);
+                                }
+                                i++;
+                            } else if (strcmp(arguments[i], "-size") == 0) {
+                                printf("size createfile: %s\n", arguments[i + 1]);
+                                if (i + 1 >= args_count) {
+                                    break;
+                                }
+                                printf("after size break");
+                                size = atoi(arguments[i + 1]);
+                                i++;
+                            } else if (strcmp(arguments[i], "-f") == 0) {
+                                mode = 0;
+                            } else if (strcmp(arguments[i], "-b") == 0) {
+                                mode = 1;
+                            }
+                        }
+
+                        printf("current i after loop: %d\n", i);
+                        printf("-->%s\n", name);
+                        printf("-->%d\n", line);
+                        printf("-->%d\n", index);
+                        printf("-->%d\n", size);
+                        printf("-->%d\n", mode);
+                        if (name == NULL || line == -1 || index == -1 || size == -1 || mode == -1) {
+                            printf("removestr: invalid arguments try `--file <name> --pos <line>:<index> --size <n> -f/-b`\n");
+                        } else {
+                            if (file_exists(name)) {
+                                removestr(name, line, index, size, mode);
+                            } else {
+                                printf("removestr: file `%s` does not exist\n", name);
                             }
                         }
                     }
