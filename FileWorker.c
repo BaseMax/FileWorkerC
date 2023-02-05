@@ -18,6 +18,34 @@ void help()
     printf("\n");
 }
 
+// Replace only first `value` to `value2` and make sure that `contents` has enough space by reallocating it
+// only change first occurrence, skip others
+char *replace_string_once(const char *contents, const char *value1, const char *value2)
+{
+    char *p, *q, *r, *s;
+    int new_len;
+    int value1_len = strlen(value1);
+    int value2_len = strlen(value2);
+
+    // Check if value1 exists in contents
+    p = strstr(contents, value1);
+    if (p == NULL)
+        return NULL;
+
+    // Allocate new memory for contents with enough space for value2
+    new_len = strlen(contents) + value2_len - value1_len + 1;
+    s = malloc(sizeof(char) * new_len);
+    if (s == NULL)
+        return NULL;
+
+    // Replace value1 with value2
+    strncpy(s, contents, p - contents);
+    strcpy(s + (p - contents), value2);
+    strcpy(s + (p - contents) + value2_len, p + value1_len);
+
+    return s;
+}
+
 // Replace all `value` to `value2` and make sure that `contents` has enough space by reallocating it
 char *replace_string(char *contents, char *value1, char *value2, int *cases)
 {
@@ -696,6 +724,7 @@ int main(int argc, char** argv)
                         char* name = NULL;
                         char* value1 = NULL;
                         char* value2 = NULL;
+                        int all = 0;
 
                         for (int i = 0; i < args_count; i++) {
                             if (strcmp(arguments[i], "--file") == 0) {
@@ -719,6 +748,8 @@ int main(int argc, char** argv)
                                 }
                                 value2 = arguments[i + 1];
                                 i++;
+                            } else if (strcmp(arguments[i], "-all") == 0) {
+                                all = 1;
                             }
                         }
 
@@ -729,9 +760,36 @@ int main(int argc, char** argv)
                                 char* contents = file_read(name);
                                 contents = string_remover(contents, '\r');
                                 int cases = 0;
-                                char* new_contents = replace_string(contents, value1, value2, &cases);
+                                char* new_contents;
+
+                                int repeated = search_string_count(contents, value1);
+                                if (repeated == 0) {
+                                    printf("replace: string `%s` not found in file `%s`\n", value1, name);
+                                    continue;
+                                } else {
+                                    printf("replace: string `%s` found in file `%s` %d times\n", value1, name, repeated);
+                                }
+
+                                if (all == 1) {
+                                    printf("And we are going to change all of them\n");
+                                } else {
+                                    printf("And we are going to only change the first occurence\n");
+                                }
+
+                                printf("going to call\n");
+
+                                char *temp = copystr(contents, strlen(contents));
+                                if (all == 1) new_contents = replace_string(temp, value1, value2, &cases);
+                                else new_contents = replace_string_once(temp, value1, value2);
+                                printf("replace_string_once called\n");
+
                                 file_write(name, new_contents);
-                                printf("replace: string `%s` replaced with `%s` in file `%s` %d times\n", value1, value2, name, cases);
+
+                                if (all == 1) {
+                                    printf("replace: string `%s` replaced with `%s` in file `%s` %d times\n", value1, value2, name, cases);
+                                } else if (strcmp(contents, new_contents) != 0) {
+                                    printf("replace: string `%s` replaced with `%s` in file `%s`\n", value1, value2, name);
+                                }
                             } else {
                                 printf("replace: file `%s` does not exist\n", name);
                             }
