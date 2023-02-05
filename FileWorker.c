@@ -496,33 +496,17 @@ int search_string_count(char *contents, char *value) {
 }
 
 // remove whitespace from the left and right
-char *trim(char *content)
-{
-    int len = strlen(content);
-    int i = 0;
-    int j = len - 1;
-    while (i < len) {
-        if (content[i] == ' ' || content[i] == '\t' || content[i] == '\n') {
-            i++;
-        } else {
-            break;
-        }
-    }
+char *trim(char *str) {
+    int len = strlen(str);
+    int start = 0;
+    int end = len - 1;
 
-    while (j >= 0) {
-        if (content[j] == ' ' || content[j] == '\t' || content[j] == '\n') {
-            j--;
-        } else {
-            break;
-        }
-    }
+    while (isspace(str[start]) && start <= end) start++;
 
-    int new_len = j - i + 1;
-    char *new_content = (char*)malloc(new_len + 1);
-    memcpy(new_content, content + i, new_len);
-    new_content[new_len] = '\0';
+    while (isspace(str[end]) && end >= start) end--;
 
-    return new_content;
+    str[end + 1] = '\0';
+    return str + start;
 }
 
 char *auto_indent(char *filepath)
@@ -553,8 +537,19 @@ char *auto_indent(char *filepath)
                 new_contents = trim(new_contents);
                 index_new_contents = strlen(new_contents);
 
+                if (strcmp(trim(line), "}") != 0) {
+                    new_contents[index_new_contents++] = '\n';
+                }
+
                 new_contents[index_new_contents++] = '}';
                 new_contents[index_new_contents++] = '\n';
+            }
+            else if (line[j] == '\n') {
+                if (index_new_contents > 0 && new_contents[index_new_contents - 1] == '\n') {
+                    // skip
+                } else {
+                    new_contents[index_new_contents++] = '\n';
+                }
             }
             else {
                 new_contents[index_new_contents++] = line[j];

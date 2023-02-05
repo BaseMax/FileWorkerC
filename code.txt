@@ -1,10 +1,13 @@
 int abs(){
 
-return 0 }
+return 0
+}
 
-int pow()             {
-return 0 }
+int pow(){
+return 0
+}
 
-int main()   {
- something }
+int main(){
+ something
+}
 
