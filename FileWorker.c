@@ -512,6 +512,7 @@ int main(int argc, char** argv)
                             if (file_exists(name)) {
                                 char* contents = file_read(name);
                                 printf("%s", contents);
+                                printf("\n");
                             } else {
                                 printf("cat: file `%s` does not exist\n", name);
                             }
@@ -626,6 +627,78 @@ int main(int argc, char** argv)
                         printf("tree: directory `%s`:\n", "./");
                         tree("./", 0, depth);
                     }
+                } else if (strcmp(command, "compare") == 0) {
+                    // handling `<file1> <file2>`
+                    if (args_count == 0) {
+                        printf("compare: invalid arguments try `<file1> <file2>`\n");
+                    } else if (args_count > 2) {
+                        printf("compare: invalid arguments try `<file1> <file2>`\n");
+                    } else {
+                        char *file1 = arguments[0];
+                        char *file2 = arguments[1];
+
+                        if (strcmp(file1, file2) == 0) {
+                            printf("compare: you are comparing the same file\n");
+                            continue;
+                        }
+
+                        if (file_exists(file1) && file_exists(file2)) {
+                            char* contents1 = file_read(file1);
+                            char* contents2 = file_read(file2);
+                            // int count_lines1 = search_string_count(contents1, "\n");
+                            // int count_lines2 = search_string_count(contents2, "\n");
+                            int count_lines1 = 0;
+                            int count_lines2 = 0;
+                            char **lines1 = split_string(contents1, '\n', &count_lines1);
+                            char **lines2 = split_string(contents2, '\n', &count_lines2);
+
+                            printf("\n");
+                            printf(" ==>'%s'\n", contents1);
+                            printf(" ==>'%s'\n", contents2);
+
+                            if (strcmp(contents1, contents2) == 0) {
+                                printf("compare: files `%s` and `%s` are equal\n", file1, file2);
+                            } else {
+                                printf("compare: files `%s` and `%s` are not equal\n", file1, file2);
+                                int min_lines = count_lines1 < count_lines2 ? count_lines1 : count_lines2;
+                                int max_lines = count_lines1 > count_lines2 ? count_lines1 : count_lines2;
+
+                                for (int i = 0; i < min_lines; i++) {
+                                    char* line1 = lines1[i];
+                                    char* line2 = lines2[i];
+
+                                    if (strcmp(line1, line2) != 0) {
+                                        printf("=============== #%d ===============\n", i + 1);
+                                        printf("%s\n%s\n", line1, line2);
+                                        printf("compare: line %d of files `%s` and `%s` are not equal\n", i + 1, file1, file2);
+                                        printf("compare: line %d of file `%s` is `%s`\n", i + 1, file1, line1);
+                                        printf("compare: line %d of file `%s` is `%s`\n", i + 1, file2, line2);
+                                    }
+                                }
+
+                                if (count_lines1 > count_lines2) {
+                                    printf("compare: file `%s` has %d more lines than file `%s`\n", file1, count_lines1 - count_lines2, file2);
+
+                                    printf(">>>>>>>>>>>> #%d -- #%d>>>>>>>>>>>>\n", count_lines1 - count_lines2, max_lines);
+                                } else if (lines2 > lines1) {
+                                    printf("compare: file `%s` has %d more lines than file `%s`\n", file2, lines2 - lines1, file1);
+
+                                    printf("<<<<<<<<<<<< #%d - %d <<<<<<<<<<<<\n", count_lines2 - count_lines1, max_lines);
+                                }
+
+                                // show the difference
+                                for (int i = min_lines; i < max_lines; i++) {
+                                    if (count_lines1 > count_lines2) {
+                                        printf("compare: line %d of file `%s` is `%s`\n", i + 1, file1, lines1[i]);
+                                    } else {
+                                        printf("compare: line %d of file `%s` is `%s`\n", i + 1, file2, lines2[i]);
+                                    }
+                                }
+                            }
+                        } else {
+                            printf("compare: files `%s` or `%s` does not exist\n", file1, file2);
+                        }
+                    }
                 } else if (strcmp(command, "removestr") == 0) {
                     // handling --file val -pos line:pos -size n -f
                     // handling --file val -pos line:pos -size n -b
@@ -687,8 +760,11 @@ int main(int argc, char** argv)
                             }
                         }
                     }
+                } else {
+                    printf("Unknown command `%s`\n", command);
+                    printf("With arguments: %s\n");
                 }
-                printf("Checking %s.%s\n", command, args);
+                // printf("Checking %s.%s\n", command, args);
             }
         }
     }
