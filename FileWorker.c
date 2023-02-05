@@ -11,6 +11,24 @@ void invalid()
     printf("invalid command\n");
 }
 
+char *get_clipboard()
+{
+    char *result = NULL;
+    if (OpenClipboard(NULL)) {
+        HANDLE hData = GetClipboardData(CF_TEXT);
+        if (hData != NULL) {
+            char *pszText = GlobalLock(hData);
+            if (pszText != NULL) {
+                result = malloc(sizeof(char) * (strlen(pszText) + 1));
+                strcpy(result, pszText);
+                GlobalUnlock(hData);
+            }
+        }
+        CloseClipboard();
+    }
+    return result;
+}
+
 void help()
 {
     printf("Supported commands:\n");
@@ -1076,6 +1094,52 @@ int main(int argc, char** argv)
                                 removestr(name, line, index, size, mode);
                             } else {
                                 printf("removestr: file `%s` does not exist\n", name);
+                            }
+                        }
+                    }
+                } else if (strcmp(command, "pastestr") == 0) {
+                    // get clipboard
+                    char* clipboard = get_clipboard();
+
+                    if (args_count == 0) {
+                        printf("pastestr: invalid arguments try `--file <name> -pos <line>:<index>`\n");
+                    } else {
+                        char* name = NULL;
+                        int line = -1;
+                        int index = -1;
+                        int i;
+                        for (i = 0; i < args_count; i++) {
+                            // printf("==> pastestr: %s\n", arguments[i]);
+                            if (strcmp(arguments[i], "--file") == 0) {
+                                // printf("file createfile: %s\n", arguments[i + 1]);
+                                if (i + 1 >= args_count) {
+                                    break;
+                                }
+                                name = arguments[i + 1];
+                                i++;
+                            } else if (strcmp(arguments[i], "-pos") == 0) {
+                                // printf("pos createfile: %s\n", arguments[i + 1]);
+                                if (i + 1 >= args_count) {
+                                    break;
+                                }
+                                char* pos = arguments[i + 1];
+                                int pos_args_count;
+                                char** pos_args = split_string(pos, ':', &pos_args_count);
+                                if (pos_args_count == 2) {
+                                    line = atoi(pos_args[0]);
+                                    index = atoi(pos_args[1]);
+                                }
+                                i++;
+                            }
+                        }
+
+                        if (name == NULL || line == -1 || index == -1) {
+                            printf("pastestr: invalid arguments try `--file <name> -pos <line>:<index>`\n");
+                        } else {
+                            if (file_exists(name)) {
+                                insertstr(name, clipboard, line, index);
+                            } else {
+                                printf("pastestr: file `%s` does not exist\n", name);
                             }
                         }
                     }
