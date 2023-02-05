@@ -495,6 +495,80 @@ int search_string_count(char *contents, char *value) {
     return count;
 }
 
+// remove whitespace from the left and right
+char *trim(char *content)
+{
+    int len = strlen(content);
+    int i = 0;
+    int j = len - 1;
+    while (i < len) {
+        if (content[i] == ' ' || content[i] == '\t' || content[i] == '\n') {
+            i++;
+        } else {
+            break;
+        }
+    }
+
+    while (j >= 0) {
+        if (content[j] == ' ' || content[j] == '\t' || content[j] == '\n') {
+            j--;
+        } else {
+            break;
+        }
+    }
+
+    int new_len = j - i + 1;
+    char *new_content = (char*)malloc(new_len + 1);
+    memcpy(new_content, content + i, new_len);
+    new_content[new_len] = '\0';
+
+    return new_content;
+}
+
+char *auto_indent(char *filepath)
+{
+    if (!file_exists(filepath)) return NULL;
+
+    char *contents = file_read(filepath);
+    contents = string_remover(contents, '\r');
+    int count_lines = 0;
+    char **lines = split_string(contents, '\n', &count_lines);
+
+    char *new_contents = (char*)malloc(strlen(contents) + 1000 + 1);
+    int index_new_contents = 0;
+
+    for (int i = 0; i < count_lines; i++) {
+        char *line = lines[i];
+
+        int line_leng = strlen(line);
+        for (int j = 0; j < line_leng; j++) {
+            if (line[j] == '{') {
+                new_contents = trim(new_contents);
+                index_new_contents = strlen(new_contents);
+
+                new_contents[index_new_contents++] = '{';
+                new_contents[index_new_contents++] = '\n';
+            }
+            else if (line[j] == '}') {
+                new_contents = trim(new_contents);
+                index_new_contents = strlen(new_contents);
+
+                new_contents[index_new_contents++] = '}';
+                new_contents[index_new_contents++] = '\n';
+            }
+            else {
+                new_contents[index_new_contents++] = line[j];
+            }
+        }
+        new_contents[index_new_contents++] = '\n';
+    }
+
+    // create file
+    file_write(filepath, new_contents);
+
+    return new_contents;
+}
+
 int main(int argc, char** argv)
 {
     int flag = 1;
@@ -1008,6 +1082,17 @@ int main(int argc, char** argv)
                             } else {
                                 printf("removestr: file `%s` does not exist\n", name);
                             }
+                        }
+                    }
+                } else if (strcmp(command, "auto-indent") == 0) {
+                    if (args_count < 1) {
+                        printf("auto-indent: invalid arguments try `<name>`\n");
+                    } else {
+                        char *filename = arguments[0];
+                        if (file_exists(filename)) {
+                            auto_indent(filename);
+                        } else {
+                            printf("auto-indent: file `%s` does not exist\n", filename);
                         }
                     }
                 } else {
