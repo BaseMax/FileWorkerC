@@ -107,10 +107,84 @@ void createfile(char* filename)
     fclose(file);
 }
 
+char *file_read(char *filepath)
+{
+	FILE* file = fopen(filepath, "rb");
+	if (file == NULL) {
+		printf("Error: Could not open file \"%s\".", filepath);
+		exit(74);
+	}
+
+	fseek(file, 0L, SEEK_END);
+	size_t fileSize = ftell(file);
+	rewind(file);
+
+	char* buffer = (char*)malloc(fileSize + 1);
+	if (buffer == NULL) {
+		printf("Error: Not enough memory to read \"%s\".", filepath);
+		exit(74);
+	}
+
+	size_t bytesRead = fread(buffer, sizeof(char), fileSize, file);
+	if (bytesRead < fileSize) {
+		printf("Error: Could not read the \"%s\".", filepath);
+		exit(74);
+	}
+
+	buffer[bytesRead] = '\0';
+
+	fclose(file);
+	return buffer;
+}
+
+char *putstring_at(char *contents, char *str, int line, int index)
+{
+    char *start = contents;
+    int curr_line = 1;
+    int curr_index = 0;
+    int len = strlen(contents);
+    char *new_contents = (char*)malloc(len + strlen(str) + 1);
+    char *new_contents_ptr = new_contents;
+
+    while (*contents) {
+        if (curr_line == line && curr_index == index) {
+            strcpy(new_contents_ptr, str);
+            new_contents_ptr += strlen(str);
+        }
+        *new_contents_ptr = *contents;
+        new_contents_ptr++;
+
+        if (*contents == '\n') {
+            curr_line++;
+            curr_index = 0;
+        } else {
+            curr_index++;
+        }
+        contents++;
+    }
+
+    if (curr_line == line && curr_index == index) {
+        strcpy(new_contents_ptr, str);
+        new_contents_ptr += strlen(str);
+    }
+    *new_contents_ptr = '\0';
+
+    free(start);
+    return new_contents;
+}
+
 void insertstr(char* filename, char* str, int line, int index)
 {
     if (file_exists(filename)) {
         printf("insertstr: file `%s` exists\n", filename);
+        char *contents = file_read(filename);
+        printf("Content is '%s'\n", contents);
+        contents = putstring_at(contents, str, line, index);
+        printf("New Content is '%s'\n", contents);
+
+        FILE* file = fopen(filename, "w");
+        fprintf(file, "%s", contents);
+        fclose(file);
     } else {
         printf("insertstr: file `%s` does not exist\n", filename);
     }
@@ -212,6 +286,46 @@ int main(int argc, char** argv)
                             printf("createfile: invalid arguments try `--file <name>`\n");
                         } else createfile(name);
                     }
+                } else if (strcmp(command, "insertstr") == 0) {
+                    // support: --file name --str value --pos 2:3
+                    if (args_count == 0) {
+                        printf("insertstr: invalid arguments try `--file <name> --str <value> --pos <line>:<index>`\n");
+                    } else {
+                        char* name = NULL;
+                        char* value = NULL;
+                        int line = -1;
+                        int index = -1;
+                        for (int i = 0; i < args_count; i++) {
+                            if (strcmp(arguments[i], "--file") == 0) {
+                                // printf("createfile: %s\n", arguments[i + 1]);
+                                if (i + 1 >= args_count) {
+                                    break;
+                                }
+                                name = arguments[i + 1];
+                            } else if (strcmp(arguments[i], "--str") == 0) {
+                                // printf("createfile: %s\n", arguments[i + 1]);
+                                if (i + 1 >= args_count) {
+                                    break;
+                                }
+                                value = arguments[i + 1];
+                            } else if (strcmp(arguments[i], "--pos") == 0) {
+                                // printf("createfile: %s\n", arguments[i + 1]);
+                                if (i + 1 >= args_count) {
+                                    break;
+                                }
+                                char* pos = arguments[i + 1];
+                                char** pos_args = split_string(pos, ':', &args_count);
+                                if (args_count == 2) {
+                                    line = atoi(pos_args[0]);
+                                    index = atoi(pos_args[1]);
+                                }
+                            }
+                        }
+                        if (name == NULL || value == NULL || line == -1 || index == -1) {
+                            printf("insertstr: invalid arguments try `--file <name> --str <value> --pos <line>:<index>`\n");
+                        } else insertstr(name, value, line, index);
+                    }
+                } else if (strcmp(command, "cat") == 0) {
                 }
                 printf("Checking %s.%s\n", command, args);
                 // parse(2, (char*[]){command, args});
