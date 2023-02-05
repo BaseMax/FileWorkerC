@@ -146,13 +146,24 @@ char *putstring_at(char *contents, char *str, int line, int index)
     char *new_contents = (char*)malloc(len + strlen(str) + 1);
     char *new_contents_ptr = new_contents;
 
+    char *prev_char = NULL;
+    char *curr_char = contents;
+    int prev_newline = 0;
+
     while (*contents) {
         if (curr_line == line && curr_index == index) {
             strcpy(new_contents_ptr, str);
             new_contents_ptr += strlen(str);
+            if (*curr_char != '\n' || (prev_char != NULL && *prev_char != '\n')) {
+                *new_contents_ptr = *curr_char;
+                new_contents_ptr++;
+            }
+            prev_newline = (*curr_char == '\n');
+        } else {
+            *new_contents_ptr = *contents;
+            new_contents_ptr++;
+            prev_newline = (*contents == '\n');
         }
-        *new_contents_ptr = *contents;
-        new_contents_ptr++;
 
         if (*contents == '\n') {
             curr_line++;
@@ -160,6 +171,8 @@ char *putstring_at(char *contents, char *str, int line, int index)
         } else {
             curr_index++;
         }
+        prev_char = contents;
+        curr_char = contents + 1;
         contents++;
     }
 
@@ -167,7 +180,14 @@ char *putstring_at(char *contents, char *str, int line, int index)
         strcpy(new_contents_ptr, str);
         new_contents_ptr += strlen(str);
     }
-    *new_contents_ptr = '\0';
+
+    if (!prev_newline) {
+        *new_contents_ptr = '\0';
+    } else {
+        *new_contents_ptr = '\n';
+        new_contents_ptr++;
+        *new_contents_ptr = '\0';
+    }
 
     free(start);
     return new_contents;
@@ -187,49 +207,6 @@ void insertstr(char* filename, char* str, int line, int index)
         fclose(file);
     } else {
         printf("insertstr: file `%s` does not exist\n", filename);
-    }
-}
-
-void parse(int argc, char** argv)
-{
-    char* command = argv[0];
-
-    // printf("%d\n", argc);
-    // for (int i = 0; i < argc; i++) {
-    //     printf("%s\n", argv[i]);
-    // }
-
-    if (strcmp(command, "help") == 0) {
-        help();
-    } else if (strcmp(command, "createfile") == 0) {
-        if (argc == 2 && strcmp(argv[0], "--file") == 0) {
-            createfile(argv[1]);
-        } else {
-            printf("createfile: invalid arguments try `--file <name>`\n");
-        }
-    } else if (strcmp(command, "insertstr") == 0) {
-        // support: --file name --str value --pos 2:3
-        if (argc == 6 && strcmp(argv[0], "--file") == 0 && strcmp(argv[2], "--str") == 0 && strcmp(argv[4], "--pos") == 0) {
-            insertstr(argv[1], argv[3], 2, 3);
-        } else {
-            printf("insertstr: invalid arguments try `--file <name> --str <value> --pos <line>:<index>`\n");
-        }
-    } else if (strcmp(command, "cat") == 0) {
-        // cat(argc, argv);
-    // find –str ”an expression with \* but not wildcard” –file a.txt
-    // find –str fire –file a.txt -count
-    // find –str fire –file a.txt -at 3
-    // find –str ”salam khubi*” –file a.txt -byword
-    // find –str ”difficult project” –file a.txt -all -byword
-    } else if (strcmp(command, "find") == 0) {
-        // cat(argc, argv);
-    // replace –str1 <str> –str2 <str> –file <file name> [-at <num> | -all]
-    } else if (strcmp(command, "replace") == 0) {
-        // replace(argc, argv);
-    } else if (strcmp(command, "compare") == 0) {
-        // compare(argc, argv);
-    } else {
-        invalid();
     }
 }
 
@@ -326,6 +303,32 @@ int main(int argc, char** argv)
                         } else insertstr(name, value, line, index);
                     }
                 } else if (strcmp(command, "cat") == 0) {
+                    // handle --file name
+                    if (args_count == 0) {
+                        printf("cat: invalid arguments try `--file <name>`\n");
+                    } else {
+                        char* name = NULL;
+                        for (int i = 0; i < args_count; i++) {
+                            if (strcmp(arguments[i], "--file") == 0) {
+                                // printf("createfile: %s\n", arguments[i + 1]);
+                                if (i + 1 >= args_count) {
+                                    break;
+                                }
+                                name = arguments[i + 1];
+                                break;
+                            }
+                        }
+                        if (name == NULL) {
+                            printf("cat: invalid arguments try `--file <name>`\n");
+                        } else {
+                            if (file_exists(name)) {
+                                char* contents = file_read(name);
+                                printf("%s", contents);
+                            } else {
+                                printf("cat: file `%s` does not exist\n", name);
+                            }
+                        }
+                    }
                 }
                 printf("Checking %s.%s\n", command, args);
                 // parse(2, (char*[]){command, args});
