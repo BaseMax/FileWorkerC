@@ -455,12 +455,6 @@ int main(int argc, char** argv)
                             }
                         }
 
-                        printf("current i after loop: %d\n", i);
-                        printf("-->%s\n", name);
-                        printf("-->%d\n", line);
-                        printf("-->%d\n", index);
-                        printf("-->%d\n", size);
-                        printf("-->%d\n", mode);
                         if (name == NULL || line == -1 || index == -1 || size == -1 || mode == -1) {
                             printf("removestr: invalid arguments try `--file <name> --pos <line>:<index> --size <n> -f/-b`\n");
                         } else {
