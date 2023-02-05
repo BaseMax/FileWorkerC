@@ -107,6 +107,25 @@ void createfile(char* filename)
     fclose(file);
 }
 
+// remove \r
+char *string_replace(char *contents, char rem)
+{
+    int len = strlen(contents);
+    char *new_contents = (char*)malloc(len + 1);
+    char *new_contents_ptr = new_contents;
+
+    while (*contents) {
+        if (*contents != rem) {
+            *new_contents_ptr = *contents;
+            new_contents_ptr++;
+        }
+        contents++;
+    }
+
+    *new_contents_ptr = '\0';
+    return new_contents;
+}
+
 char *file_read(char *filepath)
 {
 	FILE* file = fopen(filepath, "rb");
@@ -198,6 +217,7 @@ void insertstr(char* filename, char* str, int line, int index)
     if (file_exists(filename)) {
         printf("insertstr: file `%s` exists\n", filename);
         char *contents = file_read(filename);
+        contents = string_replace(contents, '\r');
         printf("Content is '%s'\n", contents);
         contents = putstring_at(contents, str, line, index);
         printf("New Content is '%s'\n", contents);
@@ -313,6 +333,7 @@ void removestr(char *name, int line, int index, int size, int mode)
     if (file_exists(name)) {
         printf("removestr: file `%s` exists\n", name);
         char *contents = file_read(name);
+        contents = string_replace(contents, '\r');
         printf("Content is '%s'\n", contents);
         contents = remove_at(contents, line, index, size, mode);
         printf("New Content is '%s'\n", contents);
@@ -511,6 +532,7 @@ int main(int argc, char** argv)
                         } else {
                             if (file_exists(name)) {
                                 char* contents = file_read(name);
+                                contents = string_replace(contents, '\r');
                                 printf("%s", contents);
                                 printf("\n");
                             } else {
@@ -562,6 +584,7 @@ int main(int argc, char** argv)
                         } else {
                             if (file_exists(name)) {
                                 char* contents = file_read(name);
+                                contents = string_replace(contents, '\r');
 
                                 if (mode == 0) {
                                     int offset = search_string(contents, value);
@@ -644,21 +667,24 @@ int main(int argc, char** argv)
 
                         if (file_exists(file1) && file_exists(file2)) {
                             char* contents1 = file_read(file1);
+                            contents1 = string_replace(contents1, '\r');
                             char* contents2 = file_read(file2);
-                            // int count_lines1 = search_string_count(contents1, "\n");
-                            // int count_lines2 = search_string_count(contents2, "\n");
-                            int count_lines1 = 0;
-                            int count_lines2 = 0;
-                            char **lines1 = split_string(contents1, '\n', &count_lines1);
-                            char **lines2 = split_string(contents2, '\n', &count_lines2);
+                            contents2 = string_replace(contents2, '\r');
 
-                            printf("\n");
-                            printf(" ==>'%s'\n", contents1);
-                            printf(" ==>'%s'\n", contents2);
+                            // printf("\n");
+                            // printf(" ==>'%s'\n", contents1);
+                            // printf(" ==>'%s'\n", contents2);
 
                             if (strcmp(contents1, contents2) == 0) {
                                 printf("compare: files `%s` and `%s` are equal\n", file1, file2);
                             } else {
+                                // int count_lines1 = search_string_count(contents1, "\n");
+                                // int count_lines2 = search_string_count(contents2, "\n");
+                                int count_lines1 = 0;
+                                int count_lines2 = 0;
+                                char **lines1 = split_string(contents1, '\n', &count_lines1);
+                                char **lines2 = split_string(contents2, '\n', &count_lines2);
+
                                 printf("compare: files `%s` and `%s` are not equal\n", file1, file2);
                                 int min_lines = count_lines1 < count_lines2 ? count_lines1 : count_lines2;
                                 int max_lines = count_lines1 > count_lines2 ? count_lines1 : count_lines2;
@@ -677,13 +703,13 @@ int main(int argc, char** argv)
                                 }
 
                                 if (count_lines1 > count_lines2) {
-                                    printf("compare: file `%s` has %d more lines than file `%s`\n", file1, count_lines1 - count_lines2, file2);
+                                    printf("compare: file `%s` has %d more lines than file `%s`\n", file1, max_lines - min_lines, file2);
 
-                                    printf(">>>>>>>>>>>> #%d -- #%d>>>>>>>>>>>>\n", count_lines1 - count_lines2, max_lines);
+                                    printf(">>>>>>>>>>>> #%d -- #%d>>>>>>>>>>>>\n", min_lines + 1, max_lines);
                                 } else if (lines2 > lines1) {
-                                    printf("compare: file `%s` has %d more lines than file `%s`\n", file2, lines2 - lines1, file1);
+                                    printf("compare: file `%s` has %d more lines than file `%s`\n", file2, max_lines - min_lines, file1);
 
-                                    printf("<<<<<<<<<<<< #%d - %d <<<<<<<<<<<<\n", count_lines2 - count_lines1, max_lines);
+                                    printf("<<<<<<<<<<<< #%d - #%d <<<<<<<<<<<<\n", min_lines + 1, max_lines);
                                 }
 
                                 // show the difference
