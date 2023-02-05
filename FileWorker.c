@@ -112,7 +112,7 @@ void createfile(char* filename)
 }
 
 // remove \r
-char *string_replace(char *contents, char rem)
+char *string_remover(char *contents, char rem)
 {
     int len = strlen(contents);
     char *new_contents = (char*)malloc(len + 1);
@@ -221,7 +221,7 @@ void insertstr(char* filename, char* str, int line, int index)
     if (file_exists(filename)) {
         printf("insertstr: file `%s` exists\n", filename);
         char *contents = file_read(filename);
-        contents = string_replace(contents, '\r');
+        contents = string_remover(contents, '\r');
         printf("Content is '%s'\n", contents);
         contents = putstring_at(contents, str, line, index);
         printf("New Content is '%s'\n", contents);
@@ -338,7 +338,7 @@ void removestr(char *name, int line, int index, int size, int mode)
     if (file_exists(name)) {
         printf("removestr: file `%s` exists\n", name);
         char *contents = file_read(name);
-        contents = string_replace(contents, '\r');
+        contents = string_remover(contents, '\r');
         printf("Content is '%s'\n", contents);
         contents = remove_at(contents, line, index, size, mode);
         printf("New Content is '%s'\n", contents);
@@ -551,7 +551,7 @@ int main(int argc, char** argv)
                         } else {
                             if (file_exists(name)) {
                                 char* contents = file_read(name);
-                                contents = string_replace(contents, '\r');
+                                contents = string_remover(contents, '\r');
                                 printf("%s", contents);
                                 printf("\n");
                             } else {
@@ -603,7 +603,7 @@ int main(int argc, char** argv)
                         } else {
                             if (file_exists(name)) {
                                 char* contents = file_read(name);
-                                contents = string_replace(contents, '\r');
+                                contents = string_remover(contents, '\r');
 
                                 if (mode == 0) {
                                     int offset = search_string(contents, value);
@@ -686,9 +686,9 @@ int main(int argc, char** argv)
 
                         if (file_exists(file1) && file_exists(file2)) {
                             char* contents1 = file_read(file1);
-                            contents1 = string_replace(contents1, '\r');
+                            contents1 = string_remover(contents1, '\r');
                             char* contents2 = file_read(file2);
-                            contents2 = string_replace(contents2, '\r');
+                            contents2 = string_remover(contents2, '\r');
 
                             // printf("\n");
                             // printf(" ==>'%s'\n", contents1);
