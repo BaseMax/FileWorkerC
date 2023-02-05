@@ -612,9 +612,9 @@ int main(int argc, char** argv)
                                         printf("find: string `%s` found in file `%s` but there is no %dth occurence\n", value, name, at);
                                         continue;
                                     } else {
-                                        printf("find: string `%s` found in file `%s` at offsets: ", value, name);
+                                        printf("find: string `%s` found in file `%s` at offsets:\n", value, name);
                                         for (int i = 0; i < count; i++) {
-                                            printf("%d ", offsets[i]);
+                                            printf(" --> %d ", offsets[i]);
                                         }
                                         printf("\n");
                                     }
