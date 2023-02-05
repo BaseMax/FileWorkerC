@@ -283,7 +283,6 @@ void removestr(char *name, int line, int index, int size, int mode)
     }
 }
 
-
 int main(int argc, char** argv)
 {
     int flag = 1;
