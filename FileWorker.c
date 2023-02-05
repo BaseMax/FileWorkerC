@@ -211,8 +211,10 @@ void insertstr(char* filename, char* str, int line, int index)
 }
 
 // print list of dirs and files in a dir (recursive)
-void tree(char *path, int level)
+void tree(char *path, int level, int max_level)
 {
+    if (max_level != -1 && level > max_level) return;
+
     char *pattern = malloc(strlen(path) + 3);
     strcpy(pattern, path);
     strcat(pattern, "/*");
@@ -221,17 +223,20 @@ void tree(char *path, int level)
     HANDLE hFind = FindFirstFile(pattern, &data);
     if (hFind != INVALID_HANDLE_VALUE) {
         do {
+            if (strcmp(data.cFileName, ".") == 0 || strcmp(data.cFileName, "..") == 0) continue;
+
             for (int i = 0; i < level; i++) {
                 printf("    ");
             }
             printf("%s\n", data.cFileName);
+
             if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
                 if (strcmp(data.cFileName, ".") != 0 && strcmp(data.cFileName, "..") != 0) {
                     char *new_path = malloc(strlen(path) + strlen(data.cFileName) + 2);
                     strcpy(new_path, path);
                     strcat(new_path, "/");
                     strcat(new_path, data.cFileName);
-                    tree(new_path, level + 1);
+                    tree(new_path, level + 1, max_level);
                 }
             }
         } while (FindNextFile(hFind, &data));
@@ -593,8 +598,8 @@ int main(int argc, char** argv)
                             }
                         }
                     }
-                } else if (strcmp(command, "tree") == 0) {
-                    // handling --dir <dir name>
+                } else if (strcmp(command, "treeall") == 0) {
+                    // handling <dir name>
                     if (args_count == 0) {
                         printf("tree: invalid arguments try `<name>`\n");
                     } else if (args_count > 1) {
@@ -603,10 +608,23 @@ int main(int argc, char** argv)
                         char *name = arguments[0];
                         if (dir_exists(name)) {
                             printf("tree: directory `%s`:\n", name);
-                            tree(name, 0);
+                            tree(name, 0, -1);
                         } else {
                             printf("tree: directory `%s` does not exist\n", name);
                         }
+                    }
+                } else if (strcmp(command, "tree") == 0) {
+                    // handling <depth>
+                    if (args_count == 0) {
+                        printf("tree: invalid arguments try `<depth>`\n");
+                    } else if (args_count > 1) {
+                        printf("tree: invalid arguments try `<depth>`\n");
+                    } else {
+                        char *depth_str = arguments[0];
+                        int depth = atoi(depth_str);
+
+                        printf("tree: directory `%s`:\n", "./");
+                        tree("./", 0, depth);
                     }
                 } else if (strcmp(command, "removestr") == 0) {
                     // handling --file val -pos line:pos -size n -f
