@@ -330,8 +330,7 @@ int *search_string_all(char *contents, char *value)
     return result;
 }
 
-int search_string_count(char *contents, char *value)
-{
+int search_string_count(char *contents, char *value) {
     int len = strlen(contents);
     int value_len = strlen(value);
     int i = 0;
@@ -345,6 +344,7 @@ int search_string_count(char *contents, char *value)
                 j = 0;
             }
         } else {
+            i -= j;
             j = 0;
         }
         i++;
@@ -528,10 +528,14 @@ int main(int argc, char** argv)
                                         printf("find: string `%s` found in file `%s` at offset %d\n", value, name, offset);
                                     }
                                 } else if (mode == 1) {
-                                    printf("mode is 1\n");
-                                    int count = search_string_count(contents, value);
-                                    printf("c is %d\n", count);
-                                    printf("find: string `%s` found in file `%s` %d times\n", value, name, count);
+                                    int offset = search_string(contents, value);
+                                    if (offset == -1) {
+                                        printf("find: string `%s` not found in file `%s`\n", value, name);
+                                        continue;
+                                    } else {
+                                        int count = search_string_count(contents, value);
+                                        printf("find: string `%s` found in file `%s` %d times\n", value, name, count);
+                                    }
                                 } else if (mode == 2) {
                                     int* offsets = search_string_all(contents, value);
                                     int count = search_string_count(contents, value);
