@@ -4,7 +4,6 @@ A Terminal based file worker written in C, which can be used to perform various 
 
 ## Features
 
-- [ ] Auto Indent
 - [x] Create a file
 - [x] Search in a file
 - [x] Append to a file
@@ -13,6 +12,7 @@ A Terminal based file worker written in C, which can be used to perform various 
 - [x] Create a directory
 - [x] Paste Memory Clipboard
 - [x] Remove String from File
+- [ ] Auto Indent (Not complete)
 - [x] Grep (search for a string in a file)
 - [x] Tree View of directory (unlimited depth or limited depth)
 
